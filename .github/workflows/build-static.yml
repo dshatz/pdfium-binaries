@@ -1,0 +1,61 @@
+name: Build static (pdfmp)
+
+permissions:
+  contents: write # release
+  actions: write # artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: PDFium branch
+        required: false
+        default: main
+      version:
+        description: PDFium version
+        required: false
+        default: ""
+      release:
+        description: Publish a GitHub release (needs branch chromium/NNNN)
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  build:
+    name: ${{ matrix.os }} ${{ matrix.cpu }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: linux, cpu: x64 }
+          - { os: linux, cpu: arm64 }
+          - { os: mac, cpu: x64 }
+          - { os: mac, cpu: arm64 }
+    uses: ./.github/workflows/build.yml
+    with:
+      branch: ${{ inputs.branch }}
+      version: ${{ inputs.version }}
+      target_os: ${{ matrix.os }}
+      target_cpu: ${{ matrix.cpu }}
+      build_type: static
+
+  release:
+    needs: build
+    if: inputs.release && startsWith(inputs.branch, 'chromium/')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v6
+        with:
+          pattern: pdfium-*-static
+      - name: Pack
+        run: for d in pdfium-*-static; do tar -czf "$d.tgz" -C "$d" .; done
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.branch }}-static
+        run: |
+          gh release create "$TAG" pdfium-*-static.tgz \
+            --repo "${{ github.repository }}" \
+            --title "PDFium ${{ inputs.version || inputs.branch }} (static)" \
+            --notes "Static libpdfium.a for linux/mac x64/arm64."

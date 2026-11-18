@@ -43,6 +43,13 @@ on:
           - catalyst
           - musl
           - simulator
+      build_type:
+        description: Library type
+        type: choice
+        default: shared
+        options:
+          - shared
+          - static
       enable_v8:
         description: Enable V8
         type: boolean
@@ -78,4 +85,5 @@ jobs:
       target_cpu: ${{ github.event.inputs.target_cpu }}
       target_environment: ${{ github.event.inputs.target_environment }}
       enable_v8: ${{ github.event.inputs.enable_v8 == 'true' }}
+      build_type: ${{ github.event.inputs.build_type }}
       emsdk_version: ${{ github.event.inputs.emsdk_version }}

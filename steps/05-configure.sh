@@ -37,6 +37,7 @@ mkdir -p "$BUILD"
     # platform C++ library provides, so the consumer's link fails on undefined
     # std::__Cr::ios_base as soon as pdfium's FDF code is pulled in.
     echo "use_custom_libcxx = false"
+    echo 'extra_cflags_cc = [ "-std=c++17" ]'
 
     if [ "$OS-$TARGET_CPU" == "linux-arm64" ]; then
       echo "use_lld = false"
